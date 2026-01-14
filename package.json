@@ -9,7 +9,7 @@
     "scripts": {
         "dev": "npm run dev --workspaces",
         "build": "npm run build --workspaces",
-        "build:web": "npx prisma generate --schema=./packages/db/schema.prisma && cd apps/web && npx next build",
+        "build:web": "npx prisma generate --schema=./packages/db/schema.prisma && npm run build --workspace=web",
         "postinstall": "npx prisma generate --schema=./packages/db/schema.prisma"
     }
 }
