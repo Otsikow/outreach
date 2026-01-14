@@ -89,6 +89,16 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Quick Actions at Top */}
+      <div className="card" style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h4 style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600 }}>Quick Actions</h4>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <a href="/intelligence" className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}>🔍 Discover Leads</a>
+          <a href="/compose" className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}>✉️ Compose Email</a>
+          <a href="/campaigns" className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}>🚀 View Campaigns</a>
+        </div>
+      </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>
         <MetricCard
           title="Total Revenue Influence"
@@ -161,15 +171,7 @@ export default function Home() {
             />
           </div>
 
-          {/* Quick Actions */}
-          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
-            <h4 style={{ margin: '0 0 1rem 0', fontSize: '0.875rem', fontWeight: 600 }}>Quick Actions</h4>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <a href="/intelligence" className="btn btn-secondary">🔍 Discover Leads</a>
-              <a href="/compose" className="btn btn-secondary">✉️ Compose Email</a>
-              <a href="/campaigns" className="btn btn-secondary">🚀 View Campaigns</a>
-            </div>
-          </div>
+
         </div>
 
         {/* Leaderboard */}
