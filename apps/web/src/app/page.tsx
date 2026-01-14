@@ -1,3 +1,5 @@
+'use client';
+
 import MetricCard from '../components/MetricCard';
 
 export default function Home() {
