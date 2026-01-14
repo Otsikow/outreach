@@ -1,0 +1,14 @@
+{
+    "name": "ai-outreach-ops",
+    "private": true,
+    "workspaces": [
+        "apps/*",
+        "packages/*",
+        "services/*"
+    ],
+    "scripts": {
+        "dev": "npm run dev --workspaces",
+        "build": "npm run build --workspaces",
+        "build:web": "cd packages/db && npx prisma generate && cd ../../apps/web && npx next build"
+    }
+}

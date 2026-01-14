@@ -1,0 +1,227 @@
+// packages/db/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  workspaces WorkspaceMember[]
+  actions    ActionLog[]
+  complianceNotes ComplianceNote[]
+}
+
+model Workspace {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members   WorkspaceMember[]
+  leads     Lead[]
+  campaigns Campaign[]
+  optOuts   OptOut[]
+}
+
+model WorkspaceMember {
+  id          String    @id @default(uuid())
+  userId      String
+  workspaceId String
+  role        String    @default("MEMBER") // OWNER, ADMIN, MEMBER
+  
+  user        User      @relation(fields: [userId], references: [id])
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@unique([userId, workspaceId])
+}
+
+model Lead {
+  id          String   @id @default(uuid())
+  workspaceId String
+  companyName String
+  website     String?
+  status      String   @default("NEW") // NEW, RESEARCHED, DRAFTED, APPROVED, SENT, REPLIED, BOOKED, CLOSED_WON, OPTED_OUT, UNQUALIFIED
+  
+  // Enriched data
+  industry    String?
+  location    String?
+  size        String?
+  placeId     String?  // Google Place ID
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace      Workspace       @relation(fields: [workspaceId], references: [id])
+  contactMethods ContactMethod[]
+  drafts         DraftEmail[]
+  approvals      ApprovalItem[]
+  
+  @@index([workspaceId])
+  @@index([status])
+  @@index([placeId])
+}
+
+model ContactMethod {
+  id          String   @id @default(uuid())
+  leadId      String
+  type        String   // EMAIL, FORM, PHONE
+  value       String   // email address, form url, phone number
+  isRoleBased Boolean  @default(false) // e.g., info@, contact@
+  
+  // Verification
+  isVerified      Boolean @default(false)
+  verificationData Json? // Hunter payload
+  
+  // Compliance
+  sourceUrlId     String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  lead       Lead       @relation(fields: [leadId], references: [id])
+  sourceUrl  SourceUrl? @relation(fields: [sourceUrlId], references: [id])
+  sendEvents SendEvent[]
+
+  @@index([value])
+  @@index([type])
+}
+
+model SourceUrl {
+  id          String   @id @default(uuid())
+  url         String
+  scrapedAt   DateTime @default(now())
+  
+  contactMethods ContactMethod[]
+}
+
+model Campaign {
+  id          String   @id @default(uuid())
+  workspaceId String
+  name        String
+  type        String   // REAM_CLEANING, UNIDOXIA
+  status      String   @default("DRAFT") // DRAFT, ACTIVE, PAUSED, COMPLETED
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace   Workspace      @relation(fields: [workspaceId], references: [id])
+  steps       SequenceStep[]
+  drafts      DraftEmail[]
+}
+
+model SequenceStep {
+  id          String   @id @default(uuid())
+  campaignId  String
+  order       Int
+  delayDays   Int      @default(0)
+  subjectTpl  String
+  bodyTpl     String
+  
+  campaign    Campaign @relation(fields: [campaignId], references: [id])
+}
+
+model DraftEmail {
+  id             String   @id @default(uuid())
+  leadId         String
+  campaignId     String
+  status         String   @default("DRAFT") // DRAFT, PENDING_APPROVAL, APPROVED, REJECTED, SENT
+  
+  subject        String
+  bodyHtml       String
+  toAddress      String
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  lead           Lead          @relation(fields: [leadId], references: [id])
+  campaign       Campaign      @relation(fields: [campaignId], references: [id])
+  approvalItem   ApprovalItem?
+  sendEvent      SendEvent?
+}
+
+model ApprovalItem {
+  id            String   @id @default(uuid())
+  draftEmailId  String   @unique
+  leadId        String
+  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED, SKIPPED, EDITED
+  
+  createdAt     DateTime @default(now())
+  reviewedAt    DateTime?
+  reviewedBy    String?  // User ID
+  
+  draftEmail    DraftEmail @relation(fields: [draftEmailId], references: [id])
+  lead          Lead       @relation(fields: [leadId], references: [id])
+}
+
+model SendEvent {
+  id              String   @id @default(uuid())
+  draftEmailId    String   @unique
+  contactMethodId String
+  messageId       String?  // Gmail/Outlook Message ID
+  provider        String   // GMAIL, OUTLOOK
+  sentAt          DateTime @default(now())
+  
+  draftEmail      DraftEmail    @relation(fields: [draftEmailId], references: [id])
+  contactMethod   ContactMethod @relation(fields: [contactMethodId], references: [id])
+  
+  replyEvent      ReplyEvent?
+  complianceNotes ComplianceNote[]
+}
+
+model ReplyEvent {
+  id          String   @id @default(uuid())
+  sendEventId String   @unique
+  content     String?
+  repliedAt   DateTime @default(now())
+  
+  sentiment   String?  // POSITIVE, NEGATIVE, NEUTRAL, OOO
+  
+  sendEvent   SendEvent @relation(fields: [sendEventId], references: [id])
+}
+
+model OptOut {
+  id          String   @id @default(uuid())
+  workspaceId String?  // If null, global opt-out
+  email       String
+  domain      String?
+  reason      String?
+  createdAt   DateTime @default(now())
+  
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id])
+
+  @@index([email])
+  @@index([domain])
+}
+
+model ComplianceNote {
+  id          String   @id @default(uuid())
+  sendEventId String
+  userId      String?  // Automated or Manual reviewer
+  
+  lawfulBasis String   // e.g., "Legitimate Interest - B2B"
+  rationale   String
+  timestamp   DateTime @default(now())
+  
+  sendEvent   SendEvent @relation(fields: [sendEventId], references: [id])
+  user        User?     @relation(fields: [userId], references: [id])
+}
+
+model ActionLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  details   Json?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}
