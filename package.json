@@ -9,6 +9,6 @@
     "scripts": {
         "dev": "npm run dev --workspaces",
         "build": "npm run build --workspaces",
-        "build:web": "cd packages/db && npx prisma generate && cd ../../apps/web && npx next build"
+        "build:web": "npm run generate --workspace=@outreach/db && npm run build --workspace=web"
     }
 }
