@@ -9,6 +9,6 @@
     "scripts": {
         "dev": "npm run dev --workspaces",
         "build": "npm run build --workspaces",
-        "build:web": "npm run generate --workspace=@outreach/db && npm run build --workspace=web"
+        "postinstall": "npx prisma generate --schema=./packages/db/schema.prisma"
     }
 }
