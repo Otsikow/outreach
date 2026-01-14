@@ -18,6 +18,7 @@ export default function Sidebar() {
                 <NavLink href="/campaigns" icon="🚀" label="Campaigns" active={pathname.startsWith('/campaigns')} />
                 <NavLink href="/intelligence" icon="🧠" label="Intelligence" active={pathname.startsWith('/intelligence')} />
                 <NavLink href="/leads" icon="👥" label="Leads" active={pathname.startsWith('/leads')} />
+                <NavLink href="/compose" icon="✉️" label="Compose" active={pathname.startsWith('/compose')} />
                 <NavLink href="/reporting" icon="📈" label="Reporting" active={pathname.startsWith('/reporting')} />
             </nav>
 

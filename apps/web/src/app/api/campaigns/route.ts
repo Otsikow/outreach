@@ -1,25 +1,38 @@
 import { prisma } from '@outreach/db';
 import { NextRequest, NextResponse } from 'next/server';
 
-// GET: List all campaigns
+// GET: List all campaigns with stats
 export async function GET() {
     try {
         const campaigns = await prisma.campaign.findMany({
             orderBy: { createdAt: 'desc' },
             include: {
-                workspace: true
+                workspace: true,
+                drafts: {
+                    select: {
+                        id: true,
+                        status: true
+                    }
+                }
             }
         });
 
-        // Transform for frontend
-        const formatted = campaigns.map(c => ({
-            id: c.id,
-            name: c.name,
-            type: c.type,
-            status: c.status,
-            progress: 0, // Calculate based on sends?
-            leads: 0 // Calculate based on relation?
-        }));
+        // Transform for frontend with calculated stats
+        const formatted = campaigns.map(c => {
+            const totalDrafts = c.drafts.length;
+            const sentDrafts = c.drafts.filter(d => d.status === 'SENT').length;
+            const progress = totalDrafts > 0 ? Math.round((sentDrafts / totalDrafts) * 100) : 0;
+
+            return {
+                id: c.id,
+                name: c.name,
+                type: c.type,
+                status: c.status,
+                createdAt: c.createdAt,
+                progress,
+                leads: totalDrafts
+            };
+        });
 
         return NextResponse.json(formatted);
     } catch (error) {
@@ -34,8 +47,7 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const { name, type, workspaceId } = body;
 
-        // TODO: Get real workspace ID from auth session
-        // For MVP, if no workspace exists, create one or use the first one
+        // Get or create workspace
         let targetWorkspaceId = workspaceId;
         if (!targetWorkspaceId) {
             let ws = await prisma.workspace.findFirst();
@@ -56,7 +68,11 @@ export async function POST(req: NextRequest) {
             }
         });
 
-        return NextResponse.json(campaign);
+        return NextResponse.json({
+            ...campaign,
+            progress: 0,
+            leads: 0
+        });
     } catch (error) {
         console.error('Failed to create campaign:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

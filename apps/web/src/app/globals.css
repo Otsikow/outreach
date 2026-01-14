@@ -161,6 +161,26 @@ a {
   background: rgba(16, 185, 129, 0.2);
 }
 
+.btn-warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.btn-warning:hover {
+  background: rgba(245, 158, 11, 0.2);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn:disabled:hover {
+  transform: none;
+}
+
 .input {
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--border);
